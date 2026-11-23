@@ -8,7 +8,18 @@ def main():
     info = Company("assumptions_lbo.json")
     entry = info.get_info()
 
-    _fcf(entry)
+    # returned fcf and ebitda of last year
+    end_fcf, end_ebitda = _fcf(entry)
+    exit_ev = entry["lbo"]["exit_multiple"] * end_ebitda
+    exit_equity = exit_ev - (end_fcf - entry["balance_sheet"]["cash"])
+    moic = exit_equity / ((entry["lbo"]["entry_multiple"] - entry["lbo"]["debt_to_ebitda"]) * entry["lbo"]["entry_ebitda"])
+    irr = moic**(1 / entry["lbo"]["holding_years"]) - 1
+
+    max_entry_eq = Discount(exit_equity, entry["lbo"]["target_irr"], entry["lbo"]["holding_years"]).get_pv()
+    max_ent_v = max_entry_eq + (entry["lbo"]["debt_to_ebitda"] * entry["lbo"]["entry_ebitda"])
+
+    print(end_fcf, end_ebitda)
+
 
 def _fcf(d: dict):
     revenue = d["operating"]["base_revenue"]
@@ -41,14 +52,10 @@ def _fcf(d: dict):
         interest = balance * d["lbo"]["interest_rate"]
         # FCF = EBIT - interest + DA - Tax on EBT - change in NWC - capex
         fcf = ebit - interest + da - ((ebit - interest) * tax) - nwc - (d["operating"]["capex_pct_rev"] * revenue)
-        closing = balance - fcf
+        closing = balance - (fcf * d["lbo"]["cash_sweep_pct"])
         schedule.append(closing)
         balance = closing
-    return schedule
-
-def repayment():
-    ...
-
+    return schedule[-1], _ebitdas[-1]
 
 
 # test sources = uses
