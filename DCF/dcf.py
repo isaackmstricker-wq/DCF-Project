@@ -37,7 +37,10 @@ class Discount:
 
 def main():
     # Pull dictionary
-    entry = Company(input("Company Info JSON: "))
+    if len(sys.argv) == 2:
+        entry = Company(sys.argv[1])
+    else:
+        entry = Company(input("Company Info JSON: "))
     company = entry.get_info()
 
     # Final equation

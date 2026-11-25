@@ -1,11 +1,15 @@
 from dcf import Company
 from dcf import Discount
+import sys
 
 # import Company information
 
 # max EV = max entry equity / (1 + IRR target)^n
 def main():
-    info = Company("assumptions_lbo.json")
+    if len(sys.argv) == 2:
+        info = Company(sys.argv[1])
+    else:
+        info = Company(input("Company Info JSON: "))
     entry = info.get_info()
 
     # returned fcf and ebitda of last year
@@ -18,8 +22,10 @@ def main():
     max_entry_eq = Discount(exit_equity, entry["lbo"]["target_irr"], entry["lbo"]["holding_years"]).get_pv()
     max_ent_v = max_entry_eq + (entry["lbo"]["debt_to_ebitda"] * entry["lbo"]["entry_ebitda"])
 
-    print(end_fcf, end_ebitda)
-
+    print(f"LBO Results for {entry["company"]}")
+    print(f"Max Enterprise Value: {max_ent_v:,.2f} {entry["units"]}")
+    print(f"Max Entry Equity: {max_entry_eq:,.2f} {entry["units"]}")
+    print(f"Implied IRR: {irr:.2%}")
 
 def _fcf(d: dict):
     revenue = d["operating"]["base_revenue"]
